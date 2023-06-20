@@ -1,0 +1,123 @@
+name: drupal10
+recipe: drupal10
+config:
+  php: '8.1'
+  composer_version: '2'
+  via: apache
+  webroot: web
+  database: mysql
+  xdebug: true
+  config:
+    server: .lando/config/server.conf
+env_file:
+  - .lando/lando.env
+  - .lando/lando-local.env
+proxy:
+  mail:
+    - mail.drupal10.lndo.site
+  solr:
+    - solr.drupal10.lndo.site:8983
+  phpmyadmin:
+    - pma.drupal10.lndo.site
+services:
+  appserver:
+    ssl: true
+    # build_as_root:
+    #   - .lando/scripts/steps/appserver-build-as-root.sh
+    # run:
+    #   - .lando/scripts/steps/appserver-startup.sh
+  solr:
+    type: solr:7
+    portforward: true
+    core: drupal10
+    config:
+      dir: web/modules/contrib/search_api_solr/jump-start/solr7/config-set
+  mail:
+    type: mailhog
+    portforward: false
+    hogfrom:
+      - appserver
+  node:
+    type: 'node:16.19'
+    globals:
+      gulp-cli: '2.3.0'
+      npm: '8.19.3'
+  phpmyadmin:
+    type: phpmyadmin
+    hosts:
+      - database
+  selenium-hub:
+    type: compose
+    app_mount: false
+    services:
+      image: seleniarm/standalone-chromium:101.0
+      shm_size: 2gb
+      command: /opt/bin/entry_point.sh
+      ports:
+        - 5900:5900
+
+tooling:
+  init: disabled
+  pull: disabled
+  push: disabled
+  share: disabled
+  # db-create:
+  #   service: database
+  #   description: "Create a database."
+  #   cmd: ./.lando/scripts/steps/db-create.sh
+  # db-drop:
+  #   service: database
+  #   description: "Drop a database."
+  #   cmd: ./.lando/scripts/steps/db-drop.sh
+  bash:
+    service: ':in'
+    description: Runs a bash shell inside the specified container
+    options:
+      in:
+        default: appserver
+        describe: Target lando service to run this command in.
+  blt:
+    service: appserver
+  gulp:
+    service: node
+  node:
+    service: node
+  npm:
+    service: node
+  yarn:
+    service: node
+  # build-theme:
+  #   description: Builds a site theme
+  #   cmd:
+  #     - node: ./.lando/scripts/steps/build-theme.sh
+  # site-settings:
+  #   service: appserver
+  #   description: Verify and create all local.settings.php files in this project if needed.
+  #   cmd: ./.lando/scripts/steps/site-settings.sh
+  #   options:
+  #     c:
+  #       type: boolean
+  #       describe: "Remove existing local.settings.php files whenever needed."
+  #     h:
+  #       type: boolean
+  #       describe: "Human mode: prints human readable messages during the process"
+  # code-standards:
+  #   service: appserver
+  #   description: Run code standards check for files changed
+  #   cmd: ./.lando/scripts/steps/code-standards.sh
+  rebuild-site:
+    # Chaining custom commands is not really possible in lando!
+    # You can run several steps in sequence but not pipe data from one to the next, for example.
+    # Is is advised you do NOT do "scripty things" in the yml file.
+    #
+    # Instead we have to resort to external scripts or to deal with slower sequential processes for
+    # multi-container tasks... See:
+    # https://github.com/lando/lando/issues/2107
+    # https://github.com/lando/lando/issues/2716
+    # https://docs.lando.dev/config/services.html#using-scripty-things
+    description: Use the shell script ".lando/scripts/becker-build" instead.
+    cmd:
+      - appserver: echo "Run .lando/scripts/becker-build.sh"
+  # behat:
+  #   service: appserver
+  #   cmd: "/app/vendor/bin/behat --config '/app/tests/behat/behat.yml'"

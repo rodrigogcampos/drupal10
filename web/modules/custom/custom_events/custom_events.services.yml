@@ -1,0 +1,15 @@
+services:
+  my_config_events_subscriber: 
+    class: '\Drupal\custom_events\EventSubscriber\ConfigEventsSubscriber'
+    tags:
+      - { name: 'event_subscriber' }
+
+  custom_events_user_login:
+    class: '\Drupal\custom_events\EventSubscriber\UserLoginSubscriber'
+    tags:
+      - { name: 'event_subscriber' }
+
+  another_config_events_subscriber:
+    class: '\Drupal\custom_events\EventSubscriber\AnotherConfigEventsSubscriber'
+    tags:
+      - { name: 'event_subscriber' }
